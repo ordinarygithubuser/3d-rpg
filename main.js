@@ -19,7 +19,7 @@ app.on('ready', () => {
         'min-height': 1000
     });
 
-    mainWindow.loadURL('file://' + __dirname + '/index.html');
+    mainWindow.loadURL('file://' + __dirname + '/static/index.html');
     mainWindow.setMenu(null);
     mainWindow.webContents.openDevTools();
 
