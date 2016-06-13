@@ -134,5 +134,18 @@ export default scene => {
         }
     };
 
+    mesh.equipTool = tool => {
+        if (!tool && mesh.tool) {
+            armRight.remove(tool);
+        } else if (mesh.tool != tool) {
+            mesh.remove(mesh.tool);
+            mesh.tool = tool;
+            armRight.add(tool);
+        } else if (!mesh.tool) {
+            mesh.tool = tool;
+            armRight.add(tool);
+        }
+    };
+
     return mesh;
 }

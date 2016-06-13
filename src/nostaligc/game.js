@@ -19,7 +19,7 @@ export default (Scene, Player) => {
     const camera = Camera(window.innerWidth, window.innerHeight);
     const scene = new Scene();
     const player = Player(scene, camera);
-    const controls = Controls(scene, player, camera);
+    const controls = Controls(scene, player);
     const node = document.getElementById('root');
     const renderer = new THREE.WebGLRenderer(conf);
 

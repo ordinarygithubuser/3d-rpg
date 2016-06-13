@@ -82,31 +82,39 @@ export default (scene, camera) => {
         }
 
         setPosition(mesh, mesh, impulse);
-        impulse.y+= 86;
+        impulse.y += 86;
         setPosition(camera, mesh, impulse);
     };
 
     entity.equip = (item, button) => {
         if (!processInput) return;
 
-        switch (item.type) {
-            case 'tool': tools[button] = item;
+        if (item.type == 'tool') {
+            if (tool) mesh.remove(tool);
+
+            tools[button] = item;
+            tool = item;
+            mesh.equipTool(tool);
         }
     };
 
     entity.use = button => {
         if (!processInput) return;
 
-        if (tool != tools[button]) {
+        if (button == 'B') {
+
+        } else if (tool != tools[button]) {
             entity.equip(tools[button], button);
         }
         if (tool) {
+            mesh.equipTool(tool);
             tool.use(entity);
         }
     };
 
     entity.rotate = angle => {
         entity.rotation += angle;
+        camera.rotateY(angle);
     };
 
     entity.equip(Sword(), 'A');
