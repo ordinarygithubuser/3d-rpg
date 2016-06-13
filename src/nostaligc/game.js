@@ -1,17 +1,6 @@
 import THREE from 'three';
 import Controls from './controls';
 
-const getDimensions = () => {
-    const height = window.innerHeight;
-    const width = window.innerWidth;
-    return { width, height };
-};
-
-const resize = renderer => {
-    const { width, height } = getDimensions();
-    renderer.setSize(width, height);
-};
-
 const conf = {
     antialias: true,
     shadowMapEnabled: true,
@@ -27,11 +16,10 @@ const Camera = (width, height) => {
 };
 
 export default (Scene, Player) => {
-    const { width, height } = getDimensions();
-    const camera = Camera(width, height);
+    const camera = Camera(window.innerWidth, window.innerHeight);
     const scene = new Scene();
     const player = Player(scene, camera);
-    const controls = Controls(scene, player);
+    const controls = Controls(scene, player, camera);
     const node = document.getElementById('root');
     const renderer = new THREE.WebGLRenderer(conf);
 
@@ -39,19 +27,24 @@ export default (Scene, Player) => {
         requestAnimationFrame(render);
         scene.update();
         controls.update();
+        camera.getCam().lookAt(camera);
         renderer.render(scene.get(), camera.getCam());
     };
 
-    renderer.setSize(width, height);
+    const resize = () => {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.aspect = window.innerWidth / window.innerHeight;
+    };
+
+    resize(renderer, camera);
     node.appendChild(renderer.domElement);
 
-    camera.getCam().position.set(0, 200, 1400);
+    camera.position.set(player.mesh.position.x, player.mesh.position.y, player.mesh.position.z);
+    camera.getCam().position.set(0, 100, 800);
     camera.getCam().lookAt(player.mesh.position);
     scene.add(camera);
 
-    window.addEventListener('resize', () => {
-        resize(renderer);
-    });
+    window.addEventListener('resize', resize);
 
     requestAnimationFrame(render);
 }

@@ -3,7 +3,9 @@ import * as Util from './util';
 const hitMaterial = Util.Material(0xff0000, 0.6, true);
 const hitGeometry = Util.Box(5, 5, 5);
 
-export default (scene, player) => {
+const rotationAngle = 0.04;
+
+export default (scene, player, camera) => {
     let gamepad = null;
     let hitBox = null;
 
@@ -22,9 +24,7 @@ export default (scene, player) => {
             }
 
             if (gamepad.buttons[1].pressed) { // B
-                player.run(true);
-            } else {
-                player.run(false);
+
             }
 
             if (gamepad.buttons[2].pressed) { // X
@@ -34,9 +34,11 @@ export default (scene, player) => {
             }
 
             if (gamepad.buttons[4].pressed) { // L
-                player.rotate(1.5);
+                camera.rotateY(rotationAngle);
+                player.rotate(rotationAngle);
             } else if (gamepad.buttons[5].pressed) { // R
-                player.rotate(-1.5);
+                camera.rotateY(-rotationAngle);
+                player.rotate(-rotationAngle);
             }
 
             if (gamepad.axes[0] < -0.5) impulse.x = -player.speed;

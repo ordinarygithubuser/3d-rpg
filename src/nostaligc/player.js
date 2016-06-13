@@ -2,49 +2,66 @@ import * as Util from './util';
 import PlayerMesh from './player/mesh';
 import RayCaster from './player/raycaster';
 
+import Sword from './item/sword-l1';
+
+const UP = Util.Vector(0, 1, 0);
+
 const Entity = mesh => {
     return  {
         mesh,
-        speed: 5,
+        speed: 10,
         onSlope: false,
         grounded: false,
-        jumping: false
+        jumping: false,
+        rotation: 0
     };
 };
 
 export default (scene, camera) => {
+    const tools = [];
+    let tool = null;
+
     const mesh = PlayerMesh(scene);
     const entity = Entity(mesh);
     const caster = RayCaster(entity, scene);
+    let processInput = true;
     let jumpPhase = 0;
 
-    const setPosition = (target, source, { x = 0, y = 0, z = 0 }, neg) => {
+    const setPosition = (target, source, { x = 0, y = 0, z = 0 }) => {
         target.position.x = source.position.x + x;
         target.position.y = source.position.y + y;
-        if (neg) target.position.z = source.position.z - z;
-        else target.position.z = source.position.z + z;
+        target.position.z = source.position.z + z;
+    };
+
+    const equipArmor = () => {
+
+    };
+
+    entity.enable = () => {
+        processInput = true;
+    };
+
+    entity.disable = () => {
+        processInput = false;
     };
 
     entity.jump = () => {
-        if (entity.grounded) {
+        if (processInput && entity.grounded) {
             entity.jumping = true;
             entity.onSlope = false;
             entity.grounded = false;
         }
     };
 
-    entity.run = (isRunning) => {
-        if (isRunning) {
-            entity.speed = 10;
-        } else {
-            entity.speed = 5;
-        }
-        mesh.run(isRunning);
-    };
-
     entity.move = impulse => {
+        if (!processInput) return;
+
+        impulse.applyAxisAngle(UP, entity.rotation);
+
         if (impulse.x != 0 || impulse.z != 0) {
             mesh.walk(impulse);
+        } else {
+            mesh.stop();
         }
 
         impulse = caster.collide(impulse);
@@ -65,12 +82,35 @@ export default (scene, camera) => {
         }
 
         setPosition(mesh, mesh, impulse);
-        setPosition(camera, mesh, impulse, true);
+        impulse.y+= 86;
+        setPosition(camera, mesh, impulse);
     };
 
-    entity.rotate = (acc) => {
-        camera.rotation.y += acc / 25;
+    entity.equip = (item, button) => {
+        if (!processInput) return;
+
+        switch (item.type) {
+            case 'tool': tools[button] = item;
+        }
     };
+
+    entity.use = button => {
+        if (!processInput) return;
+
+        if (tool != tools[button]) {
+            entity.equip(tools[button], button);
+        }
+        if (tool) {
+            tool.use(entity);
+        }
+    };
+
+    entity.rotate = angle => {
+        entity.rotation += angle;
+    };
+
+    entity.equip(Sword(), 'A');
+    entity.move(Util.Vector(0, 0, 0));
 
     return entity;
 };

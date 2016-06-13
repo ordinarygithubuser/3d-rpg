@@ -1,4 +1,5 @@
 import * as Util from '../util';
+import * as Animation from './animation';
 
 const headGeometry = Util.Sphere(12, 8, 8);
 const bodyGeometry = Util.Sphere(11, 10, 10);
@@ -7,7 +8,7 @@ const handGeometry = Util.Sphere(5, 4, 4);
 const legGeometry = Util.Sphere(5, 4, 4);
 const footGeometry = Util.Sphere(6, 4, 4);
 
-const material = Util.Material(0x000000);
+const material = Util.Material(0xa0d290);
 
 const Leg = (x, y, rotZ) => {
     const leg = Util.Mesh(legGeometry, material);
@@ -60,10 +61,8 @@ const Body = (x, y) => {
 };
 
 export default scene => {
-    let stepFactor = 0.2;
-    let running = false;
-    let leftBase = 0.05;
-    let rightBase = -0.05;
+    let leftBase = 0.08;
+    let rightBase = -0.08;
     let round = 0;
     let step = 0;
     let dir = 1;
@@ -76,6 +75,30 @@ export default scene => {
     const legLeft = Leg(-10, -30, -0.3);
     const legRight = Leg(10, -30, 0.3);
 
+    const animateWalk = () => {
+        step += 0.2;
+
+        legLeft.rotateX(dir * leftBase);
+        legRight.rotateX(dir * rightBase);
+        armLeft.rotateX(leftBase * dir);
+        armRight.rotateX(rightBase * dir);
+
+        if (step >= 2) {
+            round++;
+            step = 0;
+            dir = dir == 1 ? -1 : 1;
+            if (round % 2 == 0) {
+                let tmp = leftBase;
+                leftBase = rightBase;
+                rightBase = tmp;
+                legLeft.rotation.x = 0;
+                legRight.rotation.x = 0;
+                armLeft.rotation.x = 0;
+                armRight.rotation.x = 0;
+            }
+        }
+    };
+
     head.position.y = 0;
     head.position.y = 30;
 
@@ -85,67 +108,29 @@ export default scene => {
     mesh.add(armRight);
     mesh.add(legLeft);
     mesh.add(legRight);
+    mesh.head = head;
+    mesh.body = body;
+    mesh.arms = [armLeft, armRight];
+    mesh.legs = [legLeft, legRight];
+    let running = false;
 
     mesh.position.set(0, 46, 1000);
     mesh.castShadow = true;
     scene.add(mesh);
 
-    mesh.walk = (impulse) => {
-        // rotate
-        const angle = Math.atan2(impulse.x, impulse.z);
-        let diff = angle - mesh.rotation.y;
-
-        if (Math.abs(diff) > Math.PI) {
-            mesh.rotation.y = angle;
-            diff = angle - mesh.rotation.y;
+    mesh.walk = impulse=> {
+        if (!running) {
+            running = true;
+            Animation.walk(mesh);
         }
-
-        if (diff !== 0) {
-            mesh.rotation.y = angle;
-        }
-
-        step += stepFactor;
-
-        legLeft.rotateX(dir * leftBase);
-        legRight.rotateX(dir * rightBase);
-        armLeft.rotateX(leftBase * dir);
-        armRight.rotateX(rightBase * dir);
-
-        if (step >= stepFactor * 10) {
-            round++;
-            step = 0;
-            dir = dir == 1 ? -1 : 1;
-            if (round % 2 == 0) {
-                let tmp = leftBase;
-                leftBase = rightBase;
-                rightBase = tmp;
-            }
-        }
+        Animation.turn(mesh, impulse);
+        animateWalk();
     };
 
-    mesh.run = isRunning => {
-        if (!isRunning && running) {
-            head.position.z = 0;
-            head.position.y = 30;
-            body.position.z = 0;
-            armLeft.position.z = 0;
-            armRight.position.z = 0;
-            body.rotation.x = -0.08;
-            stepFactor = 0.2;
-            leftBase = leftBase < 0 ? -0.05 : 0.05;
-            rightBase = rightBase < 0 ? -0.05 : 0.05;
+    mesh.stop = () => {
+        if (running) {
             running = false;
-        } else if (isRunning && !running) {
-            head.position.z = 9;
-            head.position.y = 29;
-            body.position.z = 5;
-            armLeft.position.z = 5;
-            armRight.position.z = 5;
-            body.rotation.x = 0.3;
-            stepFactor = 0.5;
-            leftBase = leftBase < 0 ? -0.1 : 0.1;
-            rightBase = rightBase < 0 ? -0.1 : 0.1;
-            running = true;
+            Animation.stand(mesh);
         }
     };
 
